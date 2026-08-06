@@ -1,0 +1,13 @@
+root = true //Indica que este archivo es la raíz de la configuración. El editor no debe buscar .editorconfig en carpetas superiores.
+
+[*]
+indent_style = space         // Usar espacios (no tabs)
+indent_size = 2               // Cada indentación será de 2 espacios
+charset = utf-8               // Codificación de caracteres
+trim_trailing_whitespace = true // Elimina espacios en blanco al final de cada línea
+insert_final_newline = true     // Asegura una línea vacía al final del archivo
+end_of_line = lf                // Usar salto de línea tipo Unix (LF)
+max_line_length = off           // No aplicar límite de caracteres por línea
+
+[CHANGELOG.md]
+indent_size = false            // No se forzará indentación específica en ese archivo
