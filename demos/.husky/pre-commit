@@ -1,0 +1,1 @@
+cd demos && pnpm exec lint-staged
