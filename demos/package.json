@@ -7,6 +7,8 @@
 		"test": "jest",
 		"lint": "eslint src/**",
 		"lint:fix": "eslint src/** --fix",
+		"lint:file": "eslint",
+		"lint:file:fix": "eslint --fix",
 		"format": "prettier --write src/**",
 		"prepare": "cd .. && husky demos/.husky"
 	},
