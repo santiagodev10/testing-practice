@@ -1,14 +1,13 @@
 const BooksService = require("./books.service");
 const MongoLib = require("../lib/mongo.lib");
+const { generateOneBook, generateManyBooks } = require("../fakes/book.fake");
 
-// FAKE: datos simulados que imitan lo que devolvería la base de datos.
-// Se usan para que el test no dependa de una BD real.
-const fakeBooks = [
-   {
-      _id: 1,
-      name: "Harry Potter"
-   }
-];
+// FAKE: datos simulados que imitan lo que devolvería la base de datos,
+// generados con la librería faker para no depender de una BD real.
+// generateManyBooks(size) genera una lista; generateOneBook() un solo libro.
+// fakeBooks sirve como resultado por defecto de getAll; oneBook de create.
+const fakeBooks = generateManyBooks(10);
+const oneBook = generateOneBook();
 
 // STUB: un objeto falso que imita el comportamiento de MongoLib.
 // En vez de conectarse a MongoDB, solo devuelve la data fake.
@@ -25,7 +24,7 @@ const mongoLibStub = {
 // mockResolvedValue. Así vemos la diferencia con el stub: el spy parte de algo real.
 const realMongoLib = new MongoLib({ uri: "mongodb://fake", dbName: "demo" });
 const getAllSpy = jest.spyOn(realMongoLib, "getAll").mockResolvedValue(fakeBooks);
-const createSpy = jest.spyOn(realMongoLib, "create").mockResolvedValue({ _id: 2 });
+const createSpy = jest.spyOn(realMongoLib, "create").mockResolvedValue(oneBook);
 
 describe("Tests for BooksService", () => {
    let service;
@@ -48,11 +47,16 @@ describe("Tests for BooksService", () => {
    describe("con stub (controlo un colaborador falso)", () => {
       describe("Test for getBooks", () => {
          test("Should return a list of books", async () => {
+            //Arrange: generamos VARIOS libros con faker (generateManyBooks)
+            const expectedBooks = generateManyBooks(5);
+            console.log(expectedBooks);
+      
+            mongoLibStub.getAll.mockResolvedValue(expectedBooks);
             //Act: ejecutar el método bajo prueba (con await porque es asíncrono)
             const books = await service.getBooks({});
             // BLACK BOX: asertar el resultado (salida). No importa cómo se hiciera,
             // solo que devolvió la lista esperada.
-            expect(books).toEqual(fakeBooks);
+            expect(books).toEqual(expectedBooks);
          });
 
          test("Should forward the query to getAll", async () => {
@@ -81,9 +85,9 @@ describe("Tests for BooksService", () => {
 
       describe("Test for createBook", () => {
          test("Should forward the new book to create", async () => {
-            //Arrange: datos del libro nuevo y configurar el valor que devuelve el stub
-            const newBook = { name: "Lord of the Rings" };
-            mongoLibStub.create.mockResolvedValue({ _id: 2, ...newBook });
+            //Arrange: generamos UN libro con faker (generateOneBook) para pasar al service
+            const newBook = generateOneBook();
+            mongoLibStub.create.mockResolvedValue(newBook);
             //Act
             await service.createBook(newBook);
             // WHITE BOX: verificar que create se llamó con la colección "books" y el libro
@@ -91,15 +95,14 @@ describe("Tests for BooksService", () => {
          });
 
          test("Should return the created book", async () => {
-            //Arrange
-            const newBook = { name: "Lord of the Rings" };
-            const created = { _id: 2, ...newBook };
+            //Arrange: usamos generateOneBook para el libro que devuelve el stub
+            const created = generateOneBook();
             mongoLibStub.create.mockResolvedValue(created);
             //Act
-            const result = await service.createBook(newBook);
-            // BLACK BOX: verificar el resultado devuelto (contenido y propiedad _id)
+            const result = await service.createBook(created);
+            // BLACK BOX: verificar el resultado devuelto (contenido y propiedad name)
             expect(result).toEqual(created);
-            expect(result).toHaveProperty("_id");
+            expect(result).toHaveProperty("name");
          });
       });
    });
@@ -112,10 +115,13 @@ describe("Tests for BooksService", () => {
 
       describe("Test for getBooks", () => {
          test("Should return a list of books", async () => {
+            //Arrange: generamos VARIOS libros con faker (generateManyBooks)
+            const expectedBooks = generateManyBooks(5);
+            getAllSpy.mockResolvedValue(expectedBooks);
             //Act
             const books = await service.getBooks({});
-            // BLACK BOX: asertar el resultado. El spy devuelve fakeBooks (controlado).
-            expect(books).toEqual(fakeBooks);
+            // BLACK BOX: asertar el resultado. El spy devuelve los libros generados.
+            expect(books).toEqual(expectedBooks);
          });
 
          test("Should forward the query to getAll", async () => {
@@ -144,9 +150,9 @@ describe("Tests for BooksService", () => {
 
       describe("Test for createBook", () => {
          test("Should forward the new book to create", async () => {
-            //Arrange
-            const newBook = { name: "Lord of the Rings" };
-            createSpy.mockResolvedValue({ _id: 3, ...newBook });
+            //Arrange: generamos UN libro con faker (generateOneBook) para pasar al service
+            const newBook = generateOneBook();
+            createSpy.mockResolvedValue(newBook);
             //Act
             await service.createBook(newBook);
             // WHITE BOX
@@ -154,15 +160,14 @@ describe("Tests for BooksService", () => {
          });
 
          test("Should return the created book", async () => {
-            //Arrange
-            const newBook = { name: "Lord of the Rings" };
-            const created = { _id: 3, ...newBook };
+            //Arrange: usamos generateOneBook para el libro que devuelve el spy
+            const created = generateOneBook();
             createSpy.mockResolvedValue(created);
             //Act
-            const result = await service.createBook(newBook);
+            const result = await service.createBook(created);
             // BLACK BOX
             expect(result).toEqual(created);
-            expect(result).toHaveProperty("_id");
+            expect(result).toHaveProperty("name");
          });
       });
    });
