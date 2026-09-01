@@ -168,7 +168,43 @@ expect(mongoLibStub.create).not.toHaveBeenCalled();
 
 ---
 
-## 10. Mini plantilla para un test de servicio (con DI)
+## 10. Las dos definiciones de "test de integración"
+
+En el curso distinguen dos formas de entender un test de integración:
+
+### Definición purista (teoría/academia)
+
+Para ser un test de integración **de verdad**, la base de datos real debe participar en la verificación. El "riesgo de integración" vive en la capa de datos: que la consulta sea correcta, que el driver de Mongo funcione, que el round-trip de datos persista bien.
+
+```
+Estado ideal → http → rutas → servicio real → MongoLib real → MongoDB real
+```
+
+### Convención en desarrollo web (pragmática)
+
+En el mundo web se suele llamar "integración" a **conectar las piezas de la API usando `supertest`**, aunque la BD esté **mockeada**. Así el test "vuela" sin depender de infraestructura externa (no hace falta docker, es rápido y determinista).
+
+```
+supertest → app Express real (rutas/router/JSON) → servicio MOCK (sin BD)
+```
+
+### Comparación
+
+| Estilo | ¿Qué pregunta responde? | ¿BD en el loop? | ¿Infraestructura externa? |
+|---|---|---|---|
+| supertest + mock | "¿Mis capas HTTP se conectan y se comportan bien?" | ❌ | ❌ |
+| Integración con BD real | "¿Mi capa de datos de verdad persiste y lee bien?" | ✅ | ✅ (docker / memory-server) |
+
+### Clave a recordar
+
+- Ninguna definición es "más correcta" que la otra: depende de lo que quieras cubrir.
+- El estilo **supertest + mock** es rápido y confiable, pero **no** detecta errores reales de la capa de datos (una consulta rota, un nombre de colección mal, problemas del driver).
+- El estilo **BD real** sí los detecta, pero exige una BD aislada (`demo_test`) o `mongodb-memory-server` para no tocar datos reales.
+- Nuestro `books.e2e.test.js` (servicio mockeado) es, con la definición purista, más bien un test **de API/integración mockeada**, no un e2e con BD real.
+
+---
+
+## 11. Mini plantilla para un test de servicio (con DI)
 
 ```js
 const BooksService = require("./books.service");

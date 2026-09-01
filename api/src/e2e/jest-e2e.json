@@ -1,6 +1,7 @@
 {
    "moduleFileExtensions": ["js"],
-   "rootDir": ".",
+   "rootDir": "../..",
    "testEnvironment": "node",
-   "testRegex": ".e2e.test.js$"
+   "testRegex": ".e2e.test.js$",
+   "transformIgnorePatterns": ["node_modules/(?!(\\.pnpm/)?@faker-js)"]
 }
