@@ -2,8 +2,10 @@
    "moduleFileExtensions": ["js"],
    "rootDir": "../..",
    "testEnvironment": "node",
-   "testRegex": ".e2e.test.js$",
+   "testRegex": ".integration.test.js$",
    "testTimeout": 15000,
-   "transform": {},
+   "transform": {
+      "^.+\\.js$": "babel-jest"
+   },
    "transformIgnorePatterns": ["node_modules/(?!(\\.pnpm/)?@faker-js)"]
 }

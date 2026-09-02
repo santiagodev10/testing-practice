@@ -2,7 +2,9 @@ const { MongoClient, ObjectId } = require("mongodb");
 
 class MongoLib {
 	constructor({ uri, dbName }) {
-		this.client = new MongoClient(uri);
+		this.client = new MongoClient(uri, {
+			serverSelectionTimeoutMS: 5000,
+		});
 		this.dbName = dbName;
 		this.connection = null;
 	}
@@ -13,6 +15,11 @@ class MongoLib {
 			this.connection = this.client.db(this.dbName);
 		}
 		return this.connection;
+	}
+
+	async close() {
+		await this.client.close();
+		this.connection = null;
 	}
 
 	async getAll(collection, query = {}) {
