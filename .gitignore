@@ -78,4 +78,7 @@ $RECYCLE.BIN/
 # Instructions
 instructions/
 
+# Local GitHub Actions cheatsheet
+github-actions-cheatsheet.md
+
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos,linux
