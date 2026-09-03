@@ -13,19 +13,24 @@ jobs:
   quality:
     runs-on: ubuntu-latest
 
+    # Run all shell commands from the API project directory.
     defaults:
       run:
         working-directory: api
 
     steps:
+      # Download the repository contents into the GitHub-hosted runner.
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Install the pnpm version used by this project.
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 11.20.0
 
+      # Configure Node.js and cache pnpm's package store.
+      # The cache key is based on the lockfile, so dependency changes create a new cache.
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -33,11 +38,59 @@ jobs:
           cache: pnpm
           cache-dependency-path: api/pnpm-lock.yaml
 
+      # Install the exact dependency versions from the lockfile.
+      # The command fails if package.json and the lockfile are out of sync.
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Run ESLint before the tests so code-quality issues fail the job.
       - name: Static analysis
         run: pnpm lint
 
+      # Run only the unit tests for the service layer.
       - name: Unit tests
         run: pnpm exec jest src/services --runInBand
+
+      # Run integration tests with the fake service implementation.
+      # These tests do not require a real MongoDB instance.
+      - name: Integration tests
+        run: pnpm test:integration
+
+      # Start the isolated MongoDB container required by the E2E tests.
+      # The compose file is inside the API directory, which is the current directory.
+      - name: Start MongoDB for E2E tests
+        run: docker compose up -d mongo-e2e
+
+      # Wait until MongoDB accepts authenticated connections before running Jest.
+      # MongoDB can take a few seconds to initialize its users and database.
+      - name: Wait for MongoDB
+        run: |
+          for attempt in {1..30}; do
+            if docker compose exec -T mongo-e2e \
+              mongosh --quiet \
+              --username e2e \
+              --password e2e123 \
+              --authenticationDatabase admin \
+              --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
+              echo "MongoDB is ready"
+              exit 0
+            fi
+
+            echo "Waiting for MongoDB..."
+            sleep 2
+          done
+
+          echo "MongoDB did not become ready in time"
+          exit 1
+
+      # Run E2E tests against the real, isolated MongoDB instance.
+      - name: E2E tests
+        env:
+          MONGO_URL_E2E: mongodb://e2e:e2e123@127.0.0.1:27018/?authSource=admin
+          MONGO_DB_NAME_E2E: demo_e2e
+        run: pnpm test:e2e
+
+      # Always remove the container and its volumes, even if a previous step fails.
+      - name: Stop MongoDB
+        if: always()
+        run: docker compose down --volumes
